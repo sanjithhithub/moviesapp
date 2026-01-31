@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,12 +20,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)r_6s35(0#c&l@05$(ha_n-yv(sv68f+@x+!j(-im1e1&hu*44'
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    os.environ.get("FRONTEND_URL"),
+]
+
+
+ALLOWED_HOSTS = [ "localhost",
+    "127.0.0.1",
+    ".onrender.com",]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",   # React
+    "http://127.0.0.1:3000",
+]
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 
 # Application definition
@@ -40,11 +58,13 @@ INSTALLED_APPS = [
     'movieapp',
     'rest_framework',
     'drf_yasg',
+    'corsheaders',
 
 
 ]
 
 MIDDLEWARE = [
+    
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -52,6 +72,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
 ]
 
 ROOT_URLCONF = 'moviepage.urls'

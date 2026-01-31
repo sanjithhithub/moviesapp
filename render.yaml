@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: movie-backend
+    env: python
+    region: singapore
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn movie.wsgi:application"
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: movie.settings
+
+      - key: SECRET_KEY
+        generateValue: true
+
+      - key: DEBUG
+        value: "False"
+
+      - key: DATABASE_URL
+        fromDatabase:
+          name: movie-db
+          property: connectionString
+
+databases:
+  - name: movie-db
+    plan: free
