@@ -1,10 +1,11 @@
 services:
+  services:
   - type: web
-    name: movie-backend
+    name: movie-api
     env: python
-    region: singapore
+    plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn movie.wsgi:application"
+    startCommand: "gunicorn moviepage.wsgi:application"
     autoDeploy: true
     envVars:
       - key: DJANGO_SETTINGS_MODULE

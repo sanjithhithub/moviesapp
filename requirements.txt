@@ -1,9 +1,11 @@
-Django>=4.2,<5.0
+Django>=4.2
 djangorestframework
-django-cors-headers
-djangorestframework-simplejwt
-drf-yasg
-Pillow
 gunicorn
-python-decouple
 psycopg2-binary
+dj-database-url
+python-decouple
+whitenoise
+drf-yasg
+djangorestframework-simplejwt
+django-cors-headers
+Pillow
