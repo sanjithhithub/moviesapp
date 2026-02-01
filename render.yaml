@@ -1,15 +1,15 @@
 services:
-  services:
   - type: web
     name: movie-api
     env: python
     plan: free
+    region: singapore  # or singapore, frankfurt, etc.
     buildCommand: "./build.sh"
-    startCommand: gunicorn moviepage.wsgi:application
+    startCommand: "gunicorn moviepage.wsgi:application --bind 0.0.0.0:$PORT"
     autoDeploy: true
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: movie.settings
+        value: moviepage.settings  # ← Changed to match startCommand
 
       - key: SECRET_KEY
         generateValue: true
@@ -25,3 +25,4 @@ services:
 databases:
   - name: movie-db
     plan: free
+    region: singapore  # Should match web service region
