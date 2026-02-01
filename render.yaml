@@ -5,7 +5,7 @@ services:
     env: python
     plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn moviepage.wsgi:application"
+    startCommand: gunicorn moviepage.wsgi:application
     autoDeploy: true
     envVars:
       - key: DJANGO_SETTINGS_MODULE

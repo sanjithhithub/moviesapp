@@ -1,7 +1,7 @@
-Django>=4.2
+Django>=5.0
 djangorestframework
 gunicorn
-psycopg2-binary
+psycopg[binary]
 dj-database-url
 python-decouple
 whitenoise

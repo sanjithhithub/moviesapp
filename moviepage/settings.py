@@ -26,7 +26,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com",
+    "https://moviesapp.onrender.com",
 ]
 
 CORS_ALLOWED_ORIGINS = [
