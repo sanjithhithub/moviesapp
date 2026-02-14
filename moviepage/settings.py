@@ -20,10 +20,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = 'django-insecure-)r_6s35(0#c&l@05$(ha_n-yv(sv68f+@x+!j(-im1e1&hu*44'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", "False") == "True"
+DEBUG = "True"
 
 CSRF_TRUSTED_ORIGINS = [
     "https://moviesapp.onrender.com",
@@ -39,7 +39,7 @@ ALLOWED_HOSTS = [ "localhost",
     ".onrender.com",]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",   # React
+    "http://localhost:3000",   
     "http://127.0.0.1:3000",
 ]
 CORS_ALLOW_ALL_ORIGINS = True
@@ -185,6 +185,5 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),      # 👈 Refresh token time
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
-
     'AUTH_HEADER_TYPES': ('Bearer',),
 }

@@ -1,26 +1,16 @@
 services:
   - type: web
-    name: movie-api
+    name: moviepage
     env: python
-    plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn moviepage.wsgi:application"  # ✅ Correct
-    autoDeploy: true
+    startCommand: "gunicorn moviepage.wsgi:application"
     envVars:
-      - key: DJANGO_SETTINGS_MODULE
-        value: moviepage.settings  # ✅ Matches wsgi.py
-
-      - key: SECRET_KEY
-        generateValue: true
-
-      - key: DEBUG
-        value: "False"
-
       - key: DATABASE_URL
         fromDatabase:
-          name: movie-db
+          name: moviepage-db
           property: connectionString
 
 databases:
-  - name: movie-db
-    plan: free
+  - name: moviepage-db
+    databaseName: moviepage
+    user: movieuser
