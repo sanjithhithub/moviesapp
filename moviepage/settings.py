@@ -19,13 +19,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
 
-DEBUG = False   # Production
+DEBUG = False  # Production
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     ".onrender.com",
 ]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # ===============================
@@ -40,15 +42,16 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'movieapp',
+    'corsheaders',
     'rest_framework',
     'drf_yasg',
-    'corsheaders',
+
+    'movieapp',
 ]
 
 
 # ===============================
-# MIDDLEWARE (Correct Order)
+# MIDDLEWARE
 # ===============================
 
 MIDDLEWARE = [
@@ -65,40 +68,20 @@ MIDDLEWARE = [
 
 
 ROOT_URLCONF = 'moviepage.urls'
+WSGI_APPLICATION = 'moviepage.wsgi.application'
 
 AUTH_USER_MODEL = 'movieapp.AdminUser'
 
 
 # ===============================
-# TEMPLATES
-# ===============================
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
-
-WSGI_APPLICATION = 'moviepage.wsgi.application'
-
-
-# ===============================
-# DATABASE
+# DATABASE (Render + Supabase)
 # ===============================
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get("DATABASE_URL")
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=True
     )
 }
 
@@ -139,12 +122,16 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # ===============================
-# CORS
+# CORS SETTINGS
 # ===============================
 
-CORS_ALLOWED_ORIGINS = [
-    "https://movies-frontend.onrender.com",
-]
+# TEMPORARY (for testing)
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Production version (use instead of above later)
+# CORS_ALLOWED_ORIGINS = [
+#     "https://movies-frontend.onrender.com",
+# ]
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -162,7 +149,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",  # Change later to IsAuthenticated
     ),
 }
 
