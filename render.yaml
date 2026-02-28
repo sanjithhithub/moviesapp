@@ -3,7 +3,7 @@ services:
     name: moviepage
     env: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn moviepage.wsgi:application"
+    startCommand: "gunicorn moviepage.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL
         fromDatabase:

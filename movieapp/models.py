@@ -3,7 +3,7 @@ from django.db import models
 from django.db import models
 
 class MoviePost(models.Model):
-    post_no = models.PositiveIntegerField(unique=True, editable=False)
+    post_no = models.PositiveIntegerField(unique=True, editable=True)
     movie_name = models.CharField(max_length=200)
     image = models.ImageField(upload_to='moviepage/', blank=True, null=True)
     movie_link = models.URLField(blank=True, null=True)

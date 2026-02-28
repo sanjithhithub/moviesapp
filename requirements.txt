@@ -1,7 +1,7 @@
 Django>=5.0
 djangorestframework
 gunicorn
-psycopg[binary]
+psycopg2-binary
 dj-database-url
 python-decouple
 whitenoise
@@ -9,3 +9,4 @@ drf-yasg
 djangorestframework-simplejwt
 django-cors-headers
 Pillow
+python-dotenv

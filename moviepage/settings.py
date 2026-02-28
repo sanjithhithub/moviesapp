@@ -5,6 +5,10 @@ Django settings for moviepage project.
 from pathlib import Path
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+import dj_database_url
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -15,7 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
 
-DEBUG = False   # 🔥 Production should be False
+DEBUG = False   # Production
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -89,14 +93,13 @@ WSGI_APPLICATION = 'moviepage.wsgi.application'
 
 
 # ===============================
-# DATABASE (SQLite for now)
+# DATABASE
 # ===============================
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get("DATABASE_URL")
+    )
 }
 
 
@@ -123,10 +126,10 @@ USE_TZ = True
 
 
 # ===============================
-# STATIC & MEDIA FILES (Render Fix)
+# STATIC & MEDIA FILES
 # ===============================
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
@@ -136,7 +139,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # ===============================
-# CORS (Temporary Open)
+# CORS
 # ===============================
 
 CORS_ALLOWED_ORIGINS = [
@@ -148,7 +151,6 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://movies-frontend.onrender.com",
 ]
-
 
 
 # ===============================
