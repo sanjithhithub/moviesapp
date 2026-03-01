@@ -77,20 +77,17 @@ AUTH_USER_MODEL = 'movieapp.AdminUser'
 # DATABASE (Render + Supabase)
 # ===============================
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+# ===============================
+# DATABASE (Render + Supabase)
+# ===============================
 
-if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=True
-        )
-    }
-else:
-    print("WARNING: DATABASE_URL not set")
-    DATABASES = {}
-
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
 # ===============================
 # PASSWORD VALIDATION
 # ===============================
