@@ -18,6 +18,8 @@ from .serializers import (
     SubAdminTokenSerializer,
     CreateAdminSerializer,
 )
+from .pagination import MoviePagination   # ✅ IMPORT PAGINATION
+
 
 # ============================================================
 # 🔐 CREATE ADMIN ACCOUNT
@@ -81,11 +83,12 @@ class MoviePermission(permissions.BasePermission):
 # ============================================================
 
 class AdminMovieViewSet(viewsets.ModelViewSet):
-    queryset = MoviePost.objects.all()
+    queryset = MoviePost.objects.all().order_by("-post_no")
     serializer_class = AdminMoviePostSerializer
     permission_classes = [IsAuthenticated, MoviePermission]
     lookup_field = "post_no"
     parser_classes = (MultiPartParser, FormParser)
+    pagination_class = MoviePagination   # ✅ PAGINATION ADDED
 
     http_method_names = ["get", "post", "put", "patch", "delete", "options"]
 
@@ -98,13 +101,14 @@ class AdminMovieViewSet(viewsets.ModelViewSet):
 
 
 # ============================================================
-# 🌍 PUBLIC MOVIE APIs (NO TOKEN REQUIRED)
+# 🌍 PUBLIC MOVIE LIST (PAGINATED)
 # ============================================================
 
 class PublicMovieList(ListAPIView):
-    queryset = MoviePost.objects.all()
+    queryset = MoviePost.objects.all().order_by("-post_no")
     serializer_class = PublicMoviePostSerializer
     permission_classes = [AllowAny]
+    pagination_class = MoviePagination   # ✅ PAGINATION ADDED
 
     @swagger_auto_schema(
         operation_summary="Public – List Movies",
@@ -113,6 +117,10 @@ class PublicMovieList(ListAPIView):
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
+
+# ============================================================
+# 🌍 PUBLIC MOVIE DETAIL (INCREASE VIEW COUNT)
+# ============================================================
 
 class PublicMovieDetail(RetrieveAPIView):
     queryset = MoviePost.objects.all()
