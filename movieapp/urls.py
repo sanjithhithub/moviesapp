@@ -9,9 +9,15 @@ from .views import (
     AdminMovieViewSet,
     PublicMovieList,
     PublicMovieDetail,
-    AdminTokenView,
-    AdminAnalyticsView,   # 👈 NEW
+    MainAdminLoginView,
+    SubAdminLoginView,
+    AdminAnalyticsView,
+    CreateAdminView,   # ✅ UPDATED
 )
+
+# ============================================================
+# 🔁 ROUTER
+# ============================================================
 
 router = DefaultRouter()
 router.register(
@@ -19,6 +25,10 @@ router.register(
     AdminMovieViewSet,
     basename='admin-movies'
 )
+
+# ============================================================
+# 📘 SWAGGER CONFIG
+# ============================================================
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -30,23 +40,54 @@ schema_view = get_schema_view(
     permission_classes=[permissions.AllowAny],
 )
 
+# ============================================================
+# 🌐 URL PATTERNS
+# ============================================================
+
 urlpatterns = [
 
+    # ========================================================
     # 🌍 PUBLIC APIs
+    # ========================================================
+
     path('movies/', PublicMovieList.as_view(), name='public-movie-list'),
     path('movies/<int:post_no>/', PublicMovieDetail.as_view(), name='public-movie-detail'),
 
-    # 🔑 ADMIN AUTH
-    path('admin/token/', AdminTokenView.as_view(), name='token_obtain_pair'),
-    path('admin/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # ========================================================
+    # 🔐 ACCOUNT CREATION (Role Selection)
+    # ========================================================
 
-    # 📊 ADMIN ANALYTICS (ADMIN ONLY)
+    path('admin/create-account/', CreateAdminView.as_view(), name='create-admin'),
+
+    # ========================================================
+    # 🔑 LOGIN APIs
+    # ========================================================
+
+    path('admin/login/', MainAdminLoginView.as_view(), name='main-admin-login'),
+    path('subadmin/login/', SubAdminLoginView.as_view(), name='sub-admin-login'),
+
+    # ========================================================
+    # 🔄 TOKEN REFRESH
+    # ========================================================
+
+    path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
+
+    # ========================================================
+    # 📊 ANALYTICS (Admin Only)
+    # ========================================================
+
     path('admin/analytics/', AdminAnalyticsView.as_view(), name='admin-analytics'),
 
-    # 🔐 ADMIN CRUD
+    # ========================================================
+    # 🎬 ADMIN MOVIE CRUD
+    # ========================================================
+
     path('', include(router.urls)),
 
-    # 📘 DOCS
+    # ========================================================
+    # 📘 API DOCUMENTATION
+    # ========================================================
+
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
 ]

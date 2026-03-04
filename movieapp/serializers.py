@@ -42,14 +42,105 @@ class MovieAnalyticsSerializer(serializers.ModelSerializer):
             "last_viewed",
         ]
 
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
-class AdminTokenObtainPairSerializer(TokenObtainPairSerializer):
+# 👑 MAIN ADMIN LOGIN
+class MainAdminTokenSerializer(TokenObtainPairSerializer):
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom fields inside JWT
+        token["username"] = user.username
+        token["role"] = user.role
+
+        return token
+
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        # extra response fields (optional)
-        data['username'] = self.user.username
-        data['is_admin'] = self.user.is_staff
+        # Block inactive users
+        if not self.user.is_active:
+            raise serializers.ValidationError("Account is inactive")
+
+        # Allow only main admin
+        if self.user.role != "admin":
+            raise serializers.ValidationError(
+                "Only main admin can login here"
+            )
+
+        # Extra response data
+        data["username"] = self.user.username
+        data["role"] = self.user.role
 
         return data
+
+
+# 👨‍💼 SUB ADMIN LOGIN
+class SubAdminTokenSerializer(TokenObtainPairSerializer):
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom fields inside JWT
+        token["username"] = user.username
+        token["role"] = user.role
+
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # Block inactive users
+        if not self.user.is_active:
+            raise serializers.ValidationError("Account is inactive")
+
+        # Allow only sub admin
+        if self.user.role != "subadmin":
+            raise serializers.ValidationError(
+                "Only sub admin can login here"
+            )
+
+        data["username"] = self.user.username
+        data["role"] = self.user.role
+
+        return data
+    
+    
+# serializers.py
+
+from rest_framework import serializers
+from .models import AdminUser
+
+
+class CreateAdminSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = AdminUser
+        fields = ['username', 'password', 'role']
+
+    def create(self, validated_data):
+        return AdminUser.objects.create_user(
+            username=validated_data['username'],
+            password=validated_data['password'],
+            role=validated_data['role']
+        )
+        
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+
+class AdminLoginSerializer(TokenObtainPairSerializer):
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        token['role'] = user.role
+        token['username'] = user.username
+
+        return token        
