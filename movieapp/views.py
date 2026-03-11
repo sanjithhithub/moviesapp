@@ -1,10 +1,13 @@
-from rest_framework import viewsets, permissions, status
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework import viewsets, status
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.authentication import BasicAuthentication
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from django.db.models import F, Sum
 
 from drf_yasg.utils import swagger_auto_schema
@@ -14,30 +17,28 @@ from .models import MoviePost, MovieAnalytics
 from .serializers import (
     AdminMoviePostSerializer,
     PublicMoviePostSerializer,
-    MainAdminTokenSerializer,
-    SubAdminTokenSerializer,
+    AdminLoginSerializer,
     CreateAdminSerializer,
 )
-from .pagination import MoviePagination   # ✅ IMPORT PAGINATION
+
+from .pagination import MoviePagination
 
 
 # ============================================================
-# 🔐 CREATE ADMIN ACCOUNT
+# CREATE ADMIN
 # ============================================================
 
 class CreateAdminView(APIView):
 
-    @swagger_auto_schema(
-        operation_summary="Create Main Admin / Sub Admin",
-        request_body=CreateAdminSerializer,
-    )
+    @swagger_auto_schema(request_body=CreateAdminSerializer)
     def post(self, request):
+
         serializer = CreateAdminSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
             return Response(
-                {"success": True, "message": "Account created successfully"},
+                {"message": "Account created"},
                 status=status.HTTP_201_CREATED
             )
 
@@ -45,123 +46,148 @@ class CreateAdminView(APIView):
 
 
 # ============================================================
-# 🔐 LOGIN APIs
+# LOGIN
 # ============================================================
 
-class MainAdminLoginView(TokenObtainPairView):
-    serializer_class = MainAdminTokenSerializer
-
-
-class SubAdminLoginView(TokenObtainPairView):
-    serializer_class = SubAdminTokenSerializer
+class AdminLoginView(TokenObtainPairView):
+    serializer_class = AdminLoginSerializer
 
 
 # ============================================================
-# 🎬 MOVIE PERMISSION (ROLE BASED)
-# ============================================================
-
-class MoviePermission(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-
-        if not request.user or not request.user.is_authenticated:
-            return False
-
-        # Full access roles
-        if request.user.role in ["admin", "mainadmin"]:
-            return True
-
-        # Subadmin → only POST allowed
-        if request.user.role == "subadmin":
-            return request.method == "POST"
-
-        return False
-
-
-# ============================================================
-# 🎬 ADMIN MOVIE VIEWSET
+# ADMIN MOVIE CRUD
 # ============================================================
 
 class AdminMovieViewSet(viewsets.ModelViewSet):
-    queryset = MoviePost.objects.all().order_by("-post_no")
+
+    queryset = MoviePost.objects.all().order_by("-created_at")
     serializer_class = AdminMoviePostSerializer
-    permission_classes = [IsAuthenticated, MoviePermission]
-    lookup_field = "post_no"
+
+    # ✅ Admin views explicitly require JWT + login
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     parser_classes = (MultiPartParser, FormParser)
-    pagination_class = MoviePagination   # ✅ PAGINATION ADDED
+    pagination_class = MoviePagination
+    lookup_field = "pk"
 
-    http_method_names = ["get", "post", "put", "patch", "delete", "options"]
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
 
-    @swagger_auto_schema(
-        operation_summary="Admin – Create Movie",
-        request_body=AdminMoviePostSerializer,
-    )
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=partial
+        )
+
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, "_prefetched_objects_cache", None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response(
+            {"message": "Deleted successfully"},
+            status=status.HTTP_204_NO_CONTENT
+        )
 
 
 # ============================================================
-# 🌍 PUBLIC MOVIE LIST (PAGINATED)
+# PUBLIC MOVIE LIST — no token, no auth, just data + pagination
 # ============================================================
 
 class PublicMovieList(ListAPIView):
-    queryset = MoviePost.objects.all().order_by("-post_no")
-    serializer_class = PublicMoviePostSerializer
-    permission_classes = [AllowAny]
-    pagination_class = MoviePagination   # ✅ PAGINATION ADDED
 
-    @swagger_auto_schema(
-        operation_summary="Public – List Movies",
-        responses={200: PublicMoviePostSerializer(many=True)},
-    )
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
+    queryset = MoviePost.objects.all().order_by("-created_at")
+    serializer_class = PublicMoviePostSerializer
+    pagination_class = MoviePagination
+
+    # ✅ Completely open — no authentication, no permission check
+    authentication_classes = []
+    permission_classes = [AllowAny]
 
 
 # ============================================================
-# 🌍 PUBLIC MOVIE DETAIL (INCREASE VIEW COUNT)
+# PUBLIC MOVIE DETAIL — no token, search by ?search=postnumber1
 # ============================================================
 
-class PublicMovieDetail(RetrieveAPIView):
-    queryset = MoviePost.objects.all()
-    serializer_class = PublicMoviePostSerializer
-    lookup_field = "post_no"
+class PublicMovieDetail(APIView):
+
+    # ✅ Completely open — no authentication, no permission check
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     @swagger_auto_schema(
-        operation_summary="Public – Get Movie & Increase View Count",
+        operation_description="Get movie by post number. Example: ?search=postnumber1",
         manual_parameters=[
             openapi.Parameter(
-                "post_no",
-                openapi.IN_PATH,
-                type=openapi.TYPE_INTEGER,
-                required=True,
+                name="search",
+                in_=openapi.IN_QUERY,
+                description="Format: postnumber1 or postnumber42",
+                type=openapi.TYPE_STRING,
+                required=True
             )
         ],
-        responses={200: PublicMoviePostSerializer},
+        responses={
+            200: PublicMoviePostSerializer,
+            400: "Invalid format",
+            404: "No movie found",
+        }
     )
-    def get(self, request, *args, **kwargs):
-        movie = self.get_object()
+    def get(self, request):
 
-        analytics, _ = MovieAnalytics.objects.get_or_create(movie=movie)
-        analytics.view_count = F("view_count") + 1
-        analytics.save(update_fields=["view_count"])
-        analytics.refresh_from_db()
+        search = request.query_params.get("search", "").strip().lower()
 
-        serializer = self.get_serializer(movie)
-        return Response(serializer.data)
+        if not search.startswith("postnumber"):
+            return Response(
+                {"error": "Invalid format. Use: postnumber1 or postnumber42"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        number = search.replace("postnumber", "").strip()
+
+        if not number.isdigit():
+            return Response(
+                {"error": "Invalid number. Use: postnumber1 or postnumber42"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            movie = MoviePost.objects.get(post_no=int(number))
+        except MoviePost.DoesNotExist:
+            return Response(
+                {"error": f"No movie found for postnumber{number}"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # ✅ Track view count
+        analytics, created = MovieAnalytics.objects.get_or_create(movie=movie)
+        MovieAnalytics.objects.filter(id=analytics.id).update(
+            view_count=F("view_count") + 1
+        )
+
+        return Response(PublicMoviePostSerializer(movie).data)
 
 
 # ============================================================
-# 📊 ADMIN ANALYTICS API
+# ANALYTICS
 # ============================================================
 
 class AdminAnalyticsView(APIView):
-    permission_classes = [IsAuthenticated, MoviePermission]
 
-    @swagger_auto_schema(
-        operation_summary="Admin – View Movie Analytics",
-    )
+    # ✅ Admin only
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
 
         analytics = MovieAnalytics.objects.select_related("movie")
@@ -176,10 +202,12 @@ class AdminAnalyticsView(APIView):
             for item in analytics
         ]
 
-        total_views = analytics.aggregate(total=Sum("view_count"))["total"] or 0
+        total_views = analytics.aggregate(
+            total=Sum("view_count")
+        )["total"] or 0
 
         return Response({
             "total_movies": analytics.count(),
             "total_views": total_views,
-            "movies": data
+            "movies": data,
         })

@@ -3,6 +3,7 @@ services:
     name: moviepage
     env: python
     plan: free
+
     buildCommand: "./build.sh"
     startCommand: "gunicorn moviepage.wsgi:application --bind 0.0.0.0:$PORT"
 
@@ -10,6 +11,6 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: SECRET_KEY
-        sync: false
+        generateValue: true
       - key: DEBUG
         value: "False"

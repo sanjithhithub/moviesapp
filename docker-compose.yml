@@ -5,6 +5,8 @@ services:
     build: .
     container_name: moviepage_app
     command: gunicorn moviepage.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
     ports:
       - "8000:8000"
     env_file:
