@@ -81,17 +81,19 @@ class MovieAnalyticsSerializer(serializers.ModelSerializer):
 
 class CreateAdminSerializer(serializers.ModelSerializer):
 
+    password = serializers.CharField(write_only=True)
+
     class Meta:
-        model = User
-        fields = ["username", "password"]
+        model = AdminUser
+        fields = ["username", "password", "role"]
 
     def create(self, validated_data):
-        user = User(username=validated_data["username"])
-        user.set_password(validated_data["password"])
-        user.is_staff = True
-        user.is_superuser = True
-        user.save()
-        return user
+        return AdminUser.objects.create_user(
+            username=validated_data["username"],
+            password=validated_data["password"],
+            role=validated_data["role"]
+        )
+
 
 # ============================================================
 # LOGIN SERIALIZER
