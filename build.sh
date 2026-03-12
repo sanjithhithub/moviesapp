@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
+
+# Exit immediately if any command fails
 set -o errexit
 
-pip install --upgrade pip
+# Install dependencies
 pip install -r requirements.txt
 
-python manage.py migrate
+# Collect static files
 python manage.py collectstatic --noinput
+
+# ✅ Run migrations here — free alternative to preDeployCommand
+python manage.py migrate --noinput
