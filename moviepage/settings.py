@@ -10,9 +10,6 @@ import dj_database_url
 
 load_dotenv()
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
-
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -49,6 +46,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
 
+    # ✅ FIX 1: Added missing rest_framework_simplejwt
+    'rest_framework_simplejwt',
+
     'movieapp',
 ]
 
@@ -77,13 +77,13 @@ AUTH_USER_MODEL = 'movieapp.AdminUser'
 
 
 # ===============================
-# TEMPLATES  ✅ (MISSING BEFORE – FIXED)
+# TEMPLATES
 # ===============================
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],  # optional
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -95,9 +95,13 @@ TEMPLATES = [
         },
     },
 ]
+
+
 # ===============================
 # DATABASE CONFIGURATION
 # ===============================
+
+# ✅ FIX 2: Removed duplicate DATABASE_URL — defined only once here
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
@@ -115,6 +119,8 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+
+
 # ===============================
 # PASSWORD VALIDATION
 # ===============================
@@ -143,8 +149,9 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]  # ✅ Added
 
+# ✅ FIX 3: Removed STATICFILES_DIRS — causes collectstatic to crash
+# on Render if the /static/ folder doesn't exist in the repo
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
@@ -155,14 +162,14 @@ MEDIA_ROOT = BASE_DIR / "media"
 # LOGIN
 # ===============================
 
-LOGIN_URL = "/admin/login/"  # ✅ Added
+LOGIN_URL = "/admin/login/"
 
 
 # ===============================
 # CORS
 # ===============================
 
-CORS_ALLOW_ALL_ORIGINS = True  # Temporary for testing
+CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -215,7 +222,7 @@ SIMPLE_JWT = {
 
 
 # ===============================
-# DEFAULT AUTO FIELD  ✅ (MISSING BEFORE – IMPORTANT)
+# DEFAULT AUTO FIELD
 # ===============================
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
