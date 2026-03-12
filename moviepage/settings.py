@@ -40,13 +40,17 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+
+    # ✅ cloudinary_storage must be BEFORE staticfiles
+    'cloudinary_storage',
+
     'django.contrib.staticfiles',
+
+    'cloudinary',
 
     'corsheaders',
     'rest_framework',
     'drf_yasg',
-
-    # ✅ FIX 1: Added missing rest_framework_simplejwt
     'rest_framework_simplejwt',
 
     'movieapp',
@@ -101,7 +105,6 @@ TEMPLATES = [
 # DATABASE CONFIGURATION
 # ===============================
 
-# ✅ FIX 2: Removed duplicate DATABASE_URL — defined only once here
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
@@ -149,13 +152,18 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-# ✅ FIX 3: Removed STATICFILES_DIRS — causes collectstatic to crash
-# on Render if the /static/ folder doesn't exist in the repo
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# ✅ Cloudinary handles all media/image uploads
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY':    os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+MEDIA_URL = '/media/'
 
 
 # ===============================
