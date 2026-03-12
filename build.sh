@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 
-# Exit immediately if any command fails
+# Stop script if any command fails
 set -o errexit
 
-# Install dependencies
-pip install -r requirements.txt --no-warn-script-location
+echo "Updating pip..."
+python -m pip install --upgrade pip
 
-# ✅ Wipe old staticfiles and collect fresh
-rm -rf staticfiles
+echo "Installing dependencies..."
+python -m pip install -r requirements.txt
+
+echo "Cleaning old static files..."
+if [ -d "staticfiles" ]; then
+    rm -rf staticfiles
+fi
+
+echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Run migrations
+echo "Running migrations..."
 python manage.py migrate --noinput
+
+echo "Build completed successfully."
