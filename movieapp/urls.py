@@ -1,4 +1,5 @@
 from django.urls import path, include
+from django.views.generic import RedirectView
 from rest_framework.routers import DefaultRouter
 from rest_framework import permissions
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -45,13 +46,14 @@ schema_view = get_schema_view(
 
 urlpatterns = [
 
+    # ✅ Root URL redirects to swagger automatically
+    path('', RedirectView.as_view(url='/swagger/', permanent=False)),
+
     # ========================================================
     # PUBLIC APIs
     # ========================================================
 
     path('movies/', PublicMovieList.as_view(), name='public-movie-list'),
-
-    # ✅ FIXED: Removed <int:pk> — search is done via ?search=postnumber1
     path('movies/detail/', PublicMovieDetail.as_view(), name='public-movie-detail'),
 
     # ========================================================
@@ -61,7 +63,7 @@ urlpatterns = [
     path('admin/create-account/', CreateAdminView.as_view(), name='create-admin'),
 
     # ========================================================
-    # LOGIN (ADMIN + SUBADMIN)
+    # LOGIN
     # ========================================================
 
     path('admin/login/', AdminLoginView.as_view(), name='admin-login'),
