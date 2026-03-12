@@ -7,6 +7,8 @@ services:
     buildCommand: "./build.sh"
     startCommand: "gunicorn moviepage.wsgi:application --bind 0.0.0.0:$PORT"
 
+    autoDeploy: true
+
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -18,10 +20,10 @@ services:
         value: "False"
 
       - key: ALLOWED_HOSTS
-        value: ".onrender.com,moviesapp-po4y.onrender.com"
+        value: ".onrender.com"
 
       - key: PYTHON_VERSION
-        value: "3.11.0"
+        value: "3.11"
 
       - key: DJANGO_SETTINGS_MODULE
         value: "moviepage.settings"
