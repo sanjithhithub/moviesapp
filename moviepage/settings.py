@@ -41,11 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
 
-    # ✅ cloudinary_storage must be BEFORE staticfiles
+    # ✅ cloudinary_storage BEFORE staticfiles
     'cloudinary_storage',
-
     'django.contrib.staticfiles',
-
     'cloudinary',
 
     'corsheaders',
@@ -64,6 +62,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    # ✅ WhiteNoise must be right after SecurityMiddleware
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -147,14 +146,20 @@ USE_TZ = True
 
 
 # ===============================
-# STATIC & MEDIA
+# STATIC FILES
 # ===============================
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# ✅ WhiteNoise serves static files correctly
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# ✅ Cloudinary handles all media/image uploads
+
+# ===============================
+# MEDIA / IMAGE — Cloudinary
+# ===============================
+
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
     'API_KEY':    os.environ.get('CLOUDINARY_API_KEY'),
@@ -178,7 +183,6 @@ LOGIN_URL = "/admin/login/"
 # ===============================
 
 CORS_ALLOW_ALL_ORIGINS = True
-
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
@@ -221,7 +225,7 @@ SWAGGER_SETTINGS = {
 # ===============================
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(hours=2),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
