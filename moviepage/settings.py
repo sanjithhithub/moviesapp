@@ -12,13 +12,11 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # ===============================
 # SECURITY
 # ===============================
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
-
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
@@ -28,7 +26,6 @@ ALLOWED_HOSTS = [
 ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-
 
 # ===============================
 # APPLICATIONS
@@ -40,10 +37,10 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-
+    "django.contrib.staticfiles",  # Moved up for better WhiteNoise compatibility
+    
     # cloudinary storage
     "cloudinary_storage",
-    "django.contrib.staticfiles",
     "cloudinary",
 
     "corsheaders",
@@ -54,18 +51,14 @@ INSTALLED_APPS = [
     "movieapp",
 ]
 
-
 # ===============================
 # MIDDLEWARE
 # ===============================
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-
-    # IMPORTANT for static files
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Placed directly after SecurityMiddleware
+    "corsheaders.middleware.CorsMiddleware",       # Moved below WhiteNoise
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -74,12 +67,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-
 ROOT_URLCONF = "moviepage.urls"
 WSGI_APPLICATION = "moviepage.wsgi.application"
-
 AUTH_USER_MODEL = "movieapp.AdminUser"
-
 
 # ===============================
 # TEMPLATES
@@ -100,7 +90,6 @@ TEMPLATES = [
         },
     },
 ]
-
 
 # ===============================
 # DATABASE
@@ -124,7 +113,6 @@ else:
         }
     }
 
-
 # ===============================
 # PASSWORD VALIDATION
 # ===============================
@@ -136,17 +124,14 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-
 # ===============================
 # INTERNATIONALIZATION
 # ===============================
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
-
 USE_I18N = True
 USE_TZ = True
-
 
 # ===============================
 # STATIC FILES (FIXED)
@@ -155,9 +140,8 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# IMPORTANT: this works with drf-yasg
+# Using standard WhiteNoise storage to prevent manifest errors with drf-yasg
 STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
-
 
 # ===============================
 # MEDIA / Cloudinary
@@ -170,9 +154,7 @@ CLOUDINARY_STORAGE = {
 }
 
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-
 MEDIA_URL = "/media/"
-
 
 # ===============================
 # LOGIN
@@ -180,9 +162,8 @@ MEDIA_URL = "/media/"
 
 LOGIN_URL = "/admin/login/"
 
-
 # ===============================
-# CORS
+# CORS & CSRF
 # ===============================
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -190,8 +171,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://movies-frontend.onrender.com",
+    "https://moviesapp-1rl6.onrender.com", # Added your backend URL as well
 ]
-
 
 # ===============================
 # REST FRAMEWORK
@@ -205,7 +186,6 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny",
     ),
 }
-
 
 # ===============================
 # SWAGGER
@@ -222,7 +202,6 @@ SWAGGER_SETTINGS = {
     },
 }
 
-
 # ===============================
 # SIMPLE JWT
 # ===============================
@@ -234,7 +213,6 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
-
 
 # ===============================
 # DEFAULT AUTO FIELD
