@@ -8,6 +8,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import dj_database_url
 
+# Load environment variables
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,52 +16,51 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ===============================
 # SECURITY
 # ===============================
-
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    ".onrender.com",
-    "moviesapp-1rl6.onrender.com",
-
+    "moviesapp-1rl6.onrender.com", 
+    ".onrender.com",                
 ]
 
+# Required for Render to handle HTTPS correctly
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # ===============================
 # APPLICATIONS
 # ===============================
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",  # Moved up for better WhiteNoise compatibility
+    "django.contrib.staticfiles", 
     
-    # cloudinary storage
+    # Cloudinary Storage
     "cloudinary_storage",
     "cloudinary",
 
+    # Third Party
     "corsheaders",
     "rest_framework",
     "drf_yasg",
     "rest_framework_simplejwt",
 
+    # Local Apps
     "movieapp",
 ]
 
 # ===============================
 # MIDDLEWARE
 # ===============================
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Placed directly after SecurityMiddleware
-    "corsheaders.middleware.CorsMiddleware",       # Moved below WhiteNoise
+    "whitenoise.middleware.WhiteNoiseMiddleware",  
+    "corsheaders.middleware.CorsMiddleware",       
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -74,9 +74,8 @@ WSGI_APPLICATION = "moviepage.wsgi.application"
 AUTH_USER_MODEL = "movieapp.AdminUser"
 
 # ===============================
-# TEMPLATES
+# TEMPLATES (Fixed E403 Error)
 # ===============================
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -96,9 +95,7 @@ TEMPLATES = [
 # ===============================
 # DATABASE
 # ===============================
-
 DATABASE_URL = os.getenv("DATABASE_URL")
-
 if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.parse(
@@ -116,38 +113,20 @@ else:
     }
 
 # ===============================
-# PASSWORD VALIDATION
+# STORAGES (Django 5.0/6.0 compatible)
 # ===============================
-
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-]
-
-# ===============================
-# INTERNATIONALIZATION
-# ===============================
-
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
-USE_I18N = True
-USE_TZ = True
-
-# ===============================
-# STATIC FILES (FIXED)
-# ===============================
-
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
 
-# Using standard WhiteNoise storage to prevent manifest errors with drf-yasg
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
-
-# ===============================
-# MEDIA / Cloudinary
-# ===============================
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME"),
@@ -155,44 +134,37 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
 }
 
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-MEDIA_URL = "/media/"
-
-# ===============================
-# LOGIN
-# ===============================
-
-LOGIN_URL = "/admin/login/"
-
 # ===============================
 # CORS & CSRF
 # ===============================
-
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://movies-frontend.onrender.com",
-    "https://moviesapp-1rl6.onrender.com", # Added your backend URL as well
+    "https://moviesapp-1rl6.onrender.com",
+    "https://res.cloudinary.com",
+    "http://localhost:3000",
 ]
 
 # ===============================
-# REST FRAMEWORK
+# REST FRAMEWORK & JWT
 # ===============================
-
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.AllowAny",
-    ),
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
 # ===============================
-# SWAGGER
+# SWAGGER SETTINGS (Bearer Token Fix)
 # ===============================
-
 SWAGGER_SETTINGS = {
     "USE_SESSION_AUTH": False,
     "SECURITY_DEFINITIONS": {
@@ -200,24 +172,10 @@ SWAGGER_SETTINGS = {
             "type": "apiKey",
             "name": "Authorization",
             "in": "header",
+            "description": "Format: Bearer <your_token>"
         }
     },
 }
 
-# ===============================
-# SIMPLE JWT
-# ===============================
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(hours=2),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": True,
-    "AUTH_HEADER_TYPES": ("Bearer",),
-}
-
-# ===============================
-# DEFAULT AUTO FIELD
-# ===============================
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+LOGIN_URL = "/admin/login/"

@@ -4,6 +4,7 @@ services:
     env: python
     plan: free
 
+    # Ensure build.sh exists in your root folder!
     buildCommand: "./build.sh"
     startCommand: "gunicorn moviepage.wsgi:application --bind 0.0.0.0:$PORT"
 
@@ -11,7 +12,7 @@ services:
 
     envVars:
       - key: DATABASE_URL
-        sync: false
+        sync: false # Get this from your Neon DB dashboard
 
       - key: SECRET_KEY
         generateValue: true
@@ -23,7 +24,15 @@ services:
         value: ".onrender.com"
 
       - key: PYTHON_VERSION
-        value: "3.11"
+        value: "3.12.1" # Matches your local Python 3.12
 
       - key: DJANGO_SETTINGS_MODULE
         value: "moviepage.settings"
+
+      # --- ADD THESE FOR CLOUDINARY ---
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
