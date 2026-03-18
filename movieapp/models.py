@@ -81,11 +81,13 @@ class MoviePost(models.Model):
     # automatically upload to Cloudinary under the 'moviepage/' folder.
     image = models.ImageField(
         upload_to="moviepage/",
+        max_length=500,  # Increased to handle long filenames + folder paths
         blank=True,
         null=True
     )
 
     movie_link = models.URLField(
+        max_length=1000, # URLs (especially from streaming sites) can be very long
         blank=True,
         null=True
     )
