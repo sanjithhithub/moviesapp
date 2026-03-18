@@ -91,18 +91,14 @@ TEMPLATES = [
         },
     },
 ]
-
-# ===============================
-# DATABASE
-# ===============================
 # ... (rest of your settings)
 
+# 1. Get the Supabase Connection String from your environment variables
+# For Supabase, use the URI from Project Settings > Database (Port 5432)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Check if we are running on Render (Render sets this automatically)
-IS_PRODUCTION = os.getenv('RENDER') 
-
-if DATABASE_URL and IS_PRODUCTION:
+if DATABASE_URL:
+    # Use Supabase when a DATABASE_URL is provided
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
@@ -111,14 +107,13 @@ if DATABASE_URL and IS_PRODUCTION:
         )
     }
 else:
-    # Use SQLite for local development
+    # Fallback to local SQLite when no environment variable is set
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-
 # ===============================
 # STORAGES (Django 5.0/6.0 compatible)
 # ===============================
