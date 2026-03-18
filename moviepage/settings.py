@@ -95,16 +95,23 @@ TEMPLATES = [
 # ===============================
 # DATABASE
 # ===============================
+# ... (rest of your settings)
+
 DATABASE_URL = os.getenv("DATABASE_URL")
-if DATABASE_URL:
+
+# Check if we are running on Render (Render sets this automatically)
+IS_PRODUCTION = os.getenv('RENDER') 
+
+if DATABASE_URL and IS_PRODUCTION:
     DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
             conn_max_age=600,
             ssl_require=True,
         )
     }
 else:
+    # Use SQLite for local development
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
