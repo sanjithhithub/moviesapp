@@ -173,3 +173,9 @@ class AdminAnalyticsView(APIView):
             "total_views": total_views,
             "movies": data,
         })
+        
+        # views.py
+from django.http import JsonResponse
+
+def health_check(request):
+    return JsonResponse({"status": "ok"})

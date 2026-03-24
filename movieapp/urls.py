@@ -14,6 +14,11 @@ from .views import (
     AdminAnalyticsView,
     CreateAdminView,
 )
+from .views import health_check
+
+
+path('health/', health_check),
+
 
 # ============================================================
 # ROUTER
