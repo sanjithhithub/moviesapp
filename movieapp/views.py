@@ -91,10 +91,16 @@ class PublicMovieList(ListAPIView):
     permission_classes = [AllowAny]
 
     def get_serializer_context(self):
-        # Passes request to serializer so Cloudinary URLs are absolute
         context = super().get_serializer_context()
         context.update({"request": self.request})
         return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search = self.request.query_params.get("search", "").strip()
+        if search:
+            queryset = queryset.filter(movie_name__icontains=search)
+        return queryset
 
 # ============================================================
 # PUBLIC MOVIE DETAIL
@@ -105,12 +111,12 @@ class PublicMovieDetail(APIView):
     permission_classes = [AllowAny]
 
     @swagger_auto_schema(
-        operation_description="Get movie by post number. Example: ?search=postnumber1",
+        operation_description="Get movie by post number or movie name. Examples: ?search=postnumber1 or ?search=Inception",
         manual_parameters=[
             openapi.Parameter(
                 name="search",
                 in_=openapi.IN_QUERY,
-                description="Format: postnumber1",
+                description="postnumber1 or movie name",
                 type=openapi.TYPE_STRING,
                 required=True
             )
@@ -120,28 +126,25 @@ class PublicMovieDetail(APIView):
     def get(self, request):
         search = request.query_params.get("search", "").strip().lower()
 
-        if not search.startswith("postnumber"):
-            return Response(
-                {"error": "Invalid format. Use: postnumber1"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if search.startswith("postnumber"):
+            number_str = search.replace("postnumber", "").strip()
+            if not number_str.isdigit():
+                return Response({"error": "Invalid number."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                movie = MoviePost.objects.get(post_no=int(number_str))
+            except MoviePost.DoesNotExist:
+                return Response({"error": "No movie found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            movies = MoviePost.objects.filter(movie_name__icontains=search)
+            if not movies.exists():
+                return Response({"error": "No movie found"}, status=status.HTTP_404_NOT_FOUND)
+            movie = movies.first()
 
-        number_str = search.replace("postnumber", "").strip()
-        if not number_str.isdigit():
-            return Response({"error": "Invalid number."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            movie = MoviePost.objects.get(post_no=int(number_str))
-        except MoviePost.DoesNotExist:
-            return Response({"error": "No movie found"}, status=status.HTTP_404_NOT_FOUND)
-
-        # ✅ Efficiently track views
         analytics, _ = MovieAnalytics.objects.get_or_create(movie=movie)
         MovieAnalytics.objects.filter(id=analytics.id).update(
             view_count=F("view_count") + 1
         )
 
-        # ✅ context={'request': request} ensures absolute Cloudinary URLs
         return Response(PublicMoviePostSerializer(movie, context={'request': request}).data)
 
 # ============================================================
