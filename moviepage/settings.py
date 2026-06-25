@@ -98,7 +98,6 @@ TEMPLATES = [
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
-    # Use Supabase PostgreSQL when DATABASE_URL is available
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
@@ -107,7 +106,6 @@ if DATABASE_URL:
         )
     }
 else:
-    # Use local SQLite when DATABASE_URL is not set
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",

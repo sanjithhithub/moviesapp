@@ -111,21 +111,23 @@ class PublicMovieDetail(APIView):
     permission_classes = [AllowAny]
 
     @swagger_auto_schema(
-        operation_description="Get movie by post number or movie name. Examples: ?search=postnumber1 or ?search=Inception",
+        operation_description="Search movie by postnumber or movie name. Partial names return suggestions.",
         manual_parameters=[
             openapi.Parameter(
                 name="search",
                 in_=openapi.IN_QUERY,
-                description="postnumber1 or movie name",
+                description="postnumber5 or movie name (partial ok)",
                 type=openapi.TYPE_STRING,
                 required=True
             )
         ],
-        responses={200: PublicMoviePostSerializer}
     )
     def get(self, request):
         search = request.query_params.get("search", "").strip().lower()
+        if not search:
+            return Response({"error": "Search parameter required"}, status=400)
 
+        # --- postnumber exact match → single detail ---
         if search.startswith("postnumber"):
             number_str = search.replace("postnumber", "").strip()
             if not number_str.isdigit():
@@ -134,18 +136,35 @@ class PublicMovieDetail(APIView):
                 movie = MoviePost.objects.get(post_no=int(number_str))
             except MoviePost.DoesNotExist:
                 return Response({"error": "No movie found"}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            movies = MoviePost.objects.filter(movie_name__icontains=search)
-            if not movies.exists():
-                return Response({"error": "No movie found"}, status=status.HTTP_404_NOT_FOUND)
-            movie = movies.first()
+            analytics, _ = MovieAnalytics.objects.get_or_create(movie=movie)
+            MovieAnalytics.objects.filter(id=analytics.id).update(view_count=F("view_count") + 1)
+            return Response(PublicMoviePostSerializer(movie, context={'request': request}).data)
 
-        analytics, _ = MovieAnalytics.objects.get_or_create(movie=movie)
-        MovieAnalytics.objects.filter(id=analytics.id).update(
-            view_count=F("view_count") + 1
-        )
+        # --- movie name search ---
+        movies = MoviePost.objects.filter(movie_name__icontains=search)
 
-        return Response(PublicMoviePostSerializer(movie, context={'request': request}).data)
+        if not movies.exists():
+            return Response({"error": "No movie found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Exact single match → return full detail
+        exact = movies.filter(movie_name__iexact=search)
+        if exact.exists():
+            movie = exact.first()
+            analytics, _ = MovieAnalytics.objects.get_or_create(movie=movie)
+            MovieAnalytics.objects.filter(id=analytics.id).update(view_count=F("view_count") + 1)
+            return Response(PublicMoviePostSerializer(movie, context={'request': request}).data)
+
+        # Partial / multiple matches → return suggestions list (no view count increment)
+        data = [
+            {
+                "id": movie.id,
+                "movie_name": movie.movie_name,
+                "post_no": movie.post_no,
+                "image": movie.image.url if movie.image else None,
+            }
+            for movie in movies[:10]
+        ]
+        return Response({"suggestions": data})
 
 # ============================================================
 # ANALYTICS
