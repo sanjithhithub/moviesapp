@@ -140,6 +140,16 @@ class PublicMovieDetail(APIView):
             MovieAnalytics.objects.filter(id=analytics.id).update(view_count=F("view_count") + 1)
             return Response(PublicMoviePostSerializer(movie, context={'request': request}).data)
 
+        # --- if search is purely numeric, try post_no lookup ---
+        if search.isdigit():
+            try:
+                movie = MoviePost.objects.get(post_no=int(search))
+                analytics, _ = MovieAnalytics.objects.get_or_create(movie=movie)
+                MovieAnalytics.objects.filter(id=analytics.id).update(view_count=F("view_count") + 1)
+                return Response(PublicMoviePostSerializer(movie, context={'request': request}).data)
+            except MoviePost.DoesNotExist:
+                pass
+
         # --- movie name search ---
         movies = MoviePost.objects.filter(movie_name__icontains=search)
 
